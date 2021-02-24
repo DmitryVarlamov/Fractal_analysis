@@ -42,7 +42,7 @@ if __name__ == '__main__':
         try:
             im = Image.open(name)
             # Переводим изображение в черно-белый вид
-            im = convert_image(im, 'converted_' + name)
+            im = convert_image(im, 'inverted_' + name)
             print(f"Size of your image is {im.size[0]} x {im.size[1]}")
             dim = count_dimension(im)
             print(f"Dimension of your image is {dim}")
