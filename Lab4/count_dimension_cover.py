@@ -33,7 +33,7 @@ def get_A(cell, ds):
 
 
 def count_dimension_cover(image):
-    length, width = im.size[0], im.size[1]
+    length, width = image.size[0], image.size[1]
     cell_length, cell_width = length//CELL_SIZE, width//CELL_SIZE
     A = np.zeros((cell_length, cell_width, len(delta)+1))
     for i in range(0, cell_length):
