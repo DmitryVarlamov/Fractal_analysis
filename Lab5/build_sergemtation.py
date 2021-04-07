@@ -1,8 +1,13 @@
-from PIL import Image
+from PIL import Image, ImageDraw
 import numpy as np
 
-CELL_SIZE = 32
 delta = [1, 2]
+CELL_SIZE = 20
+
+def convert_image(image, converted_file_name):
+    black_and_white = image.convert('1')
+    black_and_white.save(converted_file_name)
+    return black_and_white
 
 def get_A(cell, ds):
     length, width = cell.size[0], cell.size[1]
@@ -29,35 +34,30 @@ def get_A(cell, ds):
     for d in ds:
         A[d] = (v[d] - v[d-1]) / 2
     
-    return A
+    return A[delta[-1]]
 
-
-def count_dimension_cover(image):
+def build_segmentation(image, save_file_name):
     length, width = image.size[0], image.size[1]
     cell_length, cell_width = length//CELL_SIZE, width//CELL_SIZE
-    A = np.zeros((cell_length, cell_width, len(delta)+1))
+    A = np.zeros((cell_length, cell_width))
     for i in range(0, cell_length):
         for j in range(0, cell_width):
             area = (i*CELL_SIZE, j*CELL_SIZE, (i+1)*CELL_SIZE, (j+1)*CELL_SIZE)
             cell = image.crop(area)
-            for d in delta:
-                A[i][j][d] = get_A(cell, delta)[d]
-
+            A[i][j] = get_A(cell, delta)
     
-    As = []
-    for d in delta:
-        s = 0
-        for i in range(0, cell_length):
-            for j in range(0, cell_width):
-                s += A[i][j][d]
-        As.append(s)
-        
-    return 2 - np.polyfit(np.log(As), np.log(delta), 1)[0] * (-1)
+    mean = np.mean(A)
 
-def convert_image(image, converted_file_name):
-    black_and_white = image.convert('L')
-    black_and_white.save(converted_file_name)
-    return black_and_white
+    new_image = Image.new("L", (cell_length*CELL_SIZE, cell_width*CELL_SIZE))
+    img1 = ImageDraw.Draw(new_image)
+
+    for i in range(0, cell_length):
+        for j in range(0, cell_width):
+            if A[i][j] < mean:
+                img1.rectangle([(i*CELL_SIZE, j*CELL_SIZE), ((i+1)*CELL_SIZE, (j+1)*CELL_SIZE)], fill = "white", outline="white")
+            else:
+                img1.rectangle([(i*CELL_SIZE, j*CELL_SIZE), ((i+1)*CELL_SIZE, (j+1)*CELL_SIZE)], fill = "black", outline="black")
+    new_image.save(save_file_name)
 
 
 if __name__ == '__main__':
@@ -71,10 +71,10 @@ if __name__ == '__main__':
             im = Image.open(name)
             # Переводим изображение в черно-белый вид
             im = convert_image(im, 'inverted_' + name)
-            dim = count_dimension_cover(im)
-            print(f"Dimension of your image is {dim}")
+            segmentated_name = "segmentated_" + name
+            build_segmentation(im, segmentated_name)
+            print(f"Sermentated image is built. File name is {segmentated_name}")
             finished = True
-
         except Exception as e:
             print(e)
             print("Could not find the file. Please try again.")
